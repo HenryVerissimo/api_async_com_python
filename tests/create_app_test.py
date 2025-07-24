@@ -1,4 +1,4 @@
-from src import create_app
+from src.api import create_app
 from quart import Quart
 
 
