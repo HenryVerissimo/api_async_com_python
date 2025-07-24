@@ -9,4 +9,4 @@ def test_create_app_return_quart_object():
 
 def test_app_import_name_is_src():
     app = create_app()
-    assert app.import_name == "src"
+    assert app.import_name == "src.api"
