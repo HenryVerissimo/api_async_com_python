@@ -1,0 +1,31 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: requirements
+        name: Update requirements.txt
+        entry: bash -c "uv export --no-annotate --no-header --format requirements.txt > requirements.txt"
+        language: python
+        files: ^uv\.lock$
+        stages: [pre-commit]
+    -   id: format
+        name: Format with ruff
+        entry: bash -c "uv run ruff format ."
+        language: python
+        files: .py$
+        stages: [pre-commit]
+    -   id: linter
+        name: Linter with ruff
+        entry: bash -c "uv run ruff check ."
+        language: python
+        files: .py$
+        stages: [pre-commit]
+    -   id: pytest
+        name: tests with pytest
+        entry: bash -c "uv run pytest --cov --cov-fail-under=80"
+        language: python
+        stages: [pre-push]
+    -   id: security
+        name: security with bandit
+        entry: bash -c "uv run bandit -r src"
+        language: python
+        stages: [pre-push]
