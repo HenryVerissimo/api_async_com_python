@@ -1,42 +1,57 @@
-from sqlmodel import create_engine, Session
-from sqlalchemy.engine import Engine
-from typing import Self
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    async_sessionmaker,
+    AsyncSession,
+    AsyncEngine,
+)
+
+from typing import AsyncGenerator, Optional
 from decouple import config
+from contextlib import asynccontextmanager
 
 
 class MySQLConnectionHandler:
     """
-    Create and manipulate the connection to the MySQL database.
+    Class responsible for creating and managing asynchronous connections to the MySQL database using SQLAlchemy.
     """
 
-    _engine: Engine | None = None
+    _engine: Optional[AsyncEngine] = None
+    _session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 
     def __init__(self):
         self._database_uri: str = config("DATABASE_URI", cast=str)
-        self.session: Session | None = None
+        self._echo_debug: bool = config("ECHO", cast=bool)
 
-    def connect_db(self) -> None:
-        """Create the session with the database"""
+    @asynccontextmanager
+    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+        """
+        Asynchronous context manager that provides a database session.
 
-        self.session = Session(self.engine)
+        Ensures safe opening and closing of the session.
+        """
 
-    def close_connection(self) -> None:
-        """Close the session with the database"""
-
-        if self.session:
-            self.session.close()
-            self.session = None
-
-    def __enter__(self) -> Self:
-        self.connect_db()
-
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.close_connection()
+        async with self.session_factory() as session:
+            yield session
 
     @property
-    def engine(self) -> Engine:
+    def session_factory(self) -> async_sessionmaker[AsyncSession]:
+        """
+        Returns a singleton session factory.
+
+        Creates an asynchronous session factory, ensuring that it is unique.
+        """
+
+        if not MySQLConnectionHandler._session_factory:
+            MySQLConnectionHandler._session_factory = async_sessionmaker(
+                bind=self.engine,
+                expire_on_commit=False,
+                class_=AsyncSession,
+            )
+
+        return MySQLConnectionHandler._session_factory
+
+    @property
+    def engine(self) -> AsyncEngine:
         """
         Returns a singleton Engine instance.
 
@@ -44,6 +59,9 @@ class MySQLConnectionHandler:
         """
 
         if not MySQLConnectionHandler._engine:
-            MySQLConnectionHandler._engine = create_engine(self._database_uri)
+            MySQLConnectionHandler._engine = create_async_engine(
+                self._database_uri,
+                echo=self._echo_debug,
+            )
 
         return MySQLConnectionHandler._engine
