@@ -4,11 +4,11 @@ from passlib.hash import bcrypt
 
 
 class User(SQLModel, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(primary_key=True, default=None)
     name: str = Field(nullable=False, max_length=100)
     age: int = Field(nullable=False)
     email: str = Field(nullable=False, max_length=100, index=True)
-    password_hash: str = Field(nullable=False)
+    password_hash: str = Field(nullable=False, default="pre-hash")
 
     async def set_password_hash(self, password: str) -> None:
         """convert user password in hash"""
