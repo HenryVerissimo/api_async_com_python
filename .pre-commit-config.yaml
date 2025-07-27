@@ -11,13 +11,13 @@ repos:
         name: Format with ruff
         entry: bash -c "uv run ruff format ."
         language: python
-        files: .py$
+        files: \.py$
         stages: [pre-commit]
     -   id: linter
         name: Linter with ruff
         entry: bash -c "uv run ruff check ."
         language: python
-        files: .py$
+        files: \.py$
         stages: [pre-commit]
     -   id: pytest
         name: tests with pytest
